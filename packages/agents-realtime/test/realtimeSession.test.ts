@@ -11,6 +11,26 @@ import {
 } from '@openai/agents-core';
 import * as utils from '../src/utils';
 import type { TransportToolCallEvent } from '../src/transportLayerEvents';
+it("should send trace.end before closing session", async () => {
+  const session = new RealtimeSession({ ws: mockWs, sessionId: "123" });
+  await session.close();
+  expect(mockWs.send).toHaveBeenCalledWith(expect.stringContaining('"type":"trace.end"'));
+});
+it("should emit message and update history for non-text assistant responses", async () => {
+  const session = new RealtimeSession({ ws: mockWs });
+  const events: any[] = [];
+  session.on("message", e => events.push(e));
+
+  session["handleServerEvent"]({
+    type: "message",
+    data: { role: "assistant", toolCalls: [], audio: "voice-data" }
+  });
+
+  expect(events.length).toBe(1);
+  expect(session.history().length).toBe(1);
+});
+
+
 
 function createMessage(id: string, text: string): RealtimeItem {
   return {
