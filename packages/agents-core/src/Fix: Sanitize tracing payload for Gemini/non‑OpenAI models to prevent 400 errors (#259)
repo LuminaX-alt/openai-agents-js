@@ -1,0 +1,43 @@
+// packages/agents-core/src/tracingSanitizer.ts
+
+/**
+ * Sanitizes span usage data for non‑OpenAI providers.
+ * Gemini and other non‑OpenAI models often reject OpenAI‑style usage fields,
+ * which causes 400 errors in tracing exports.
+ */
+export function sanitizeSpanUsage(spanData: any, modelName: string): any {
+  const lowerModel = modelName?.toLowerCase() || "";
+  const isNonOpenAI = lowerModel.includes("gemini") || !lowerModel.includes("openai");
+
+  if (isNonOpenAI && spanData?.usage) {
+    const { total_tokens, prompt_tokens, completion_tokens, ...restUsage } = spanData.usage;
+    return { ...spanData, usage: restUsage };
+  }
+
+  return spanData;
+}
+span.span_data = sanitizeSpanUsage(span.span_data, span.model || "");
+// packages/agents-core/tests/tracingSanitizer.test.ts
+
+import { sanitizeSpanUsage } from "../src/tracingSanitizer";
+
+describe("sanitizeSpanUsage", () => {
+  it("removes usage tokens for Gemini", () => {
+    const span = { usage: { total_tokens: 100, prompt_tokens: 50, completion_tokens: 50, other: 1 } };
+    const sanitized = sanitizeSpanUsage(span, "gemini-1.5-flash");
+    expect(sanitized.usage.total_tokens).toBeUndefined();
+    expect(sanitized.usage.other).toBe(1);
+  });
+
+  it("preserves usage for OpenAI", () => {
+    const span = { usage: { total_tokens: 100 } };
+    const sanitized = sanitizeSpanUsage(span, "gpt-4");
+    expect(sanitized.usage.total_tokens).toBe(100);
+  });
+
+  it("does nothing if no usage data exists", () => {
+    const span = {};
+    const sanitized = sanitizeSpanUsage(span, "gemini-1.5-flash");
+    expect(sanitized).toEqual(span);
+  });
+});
