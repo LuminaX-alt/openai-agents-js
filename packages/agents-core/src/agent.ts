@@ -11,6 +11,22 @@ import {
   tool,
   type Tool,
 } from './tool';
+function injectVariables(prompt: string, vars: Record<string, string>): string {
+  return prompt.replace(/\{\{(\w+)\}\}/g, (_, v) => vars[v] ?? "");
+}
+const rawPrompt = typeof config.instructions === 'function'
+  ? await config.instructions(runContext, agent)
+  : config.instructions;
+
+const variables = {
+  DATE: new Date().toISOString().split('T')[0],  // current date
+  ...process.env    // environment variables
+};
+
+const injectedPrompt = injectVariables(rawPrompt, variables);
+
+const finalPrompt = injectedPrompt;
+
 import type {
   ResolvedAgentOutput,
   JsonSchemaDefinition,
