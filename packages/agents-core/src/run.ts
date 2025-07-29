@@ -56,6 +56,23 @@ import { StreamEventResponseCompleted } from './types/protocol';
 import { convertAgentOutputTypeToSerializable } from './utils/tools';
 
 const DEFAULT_MAX_TURNS = 10;
+// After applying any hook overrides
+const hookOverride = await agent.hooks?.on_before_model?.(runContext, agent);
+
+if (hookOverride?.modelSettings !== undefined) {
+  modelSettings = modelSettings.resolve(hookOverride.modelSettings);
+}
+
+// --- Fix for Issue #116: honor toolChoice = 'none' ---
+if (modelSettings.toolChoice === 'none') {
+  modelSettings = {
+    ...modelSettings,
+    toolChoice: 'none',
+    parallel_tool_calls: false, // also disable parallel tool calls
+  };
+}
+// -----------------------------------------------
+
 
 /**
  * Configures settings for the entire agent run.
