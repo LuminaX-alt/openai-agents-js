@@ -71,6 +71,22 @@ if (modelSettings.toolChoice === 'none') {
     parallel_tool_calls: false, // also disable parallel tool calls
   };
 }
+const hookOverride = await agent.hooks?.on_before_model?.(runContext, agent);
+
+if (hookOverride?.modelSettings !== undefined) {
+  modelSettings = modelSettings.resolve(hookOverride.modelSettings);
+}
+
+// --- Fix for Issue #116: Ensure toolChoice = 'none' is honored ---
+if (hookOverride?.modelSettings?.toolChoice === 'none') {
+  modelSettings = {
+    ...modelSettings,
+    toolChoice: 'none',
+    parallel_tool_calls: false, // prevent accidental tool calls
+  };
+}
+// ----------------------------------------------------------------
+
 // -----------------------------------------------
 
 
