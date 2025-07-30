@@ -12,6 +12,21 @@
     "build": "tsc",
     "build-check": "tsc --noEmit -p ./tsconfig.test.json"
   },
+  "scripts": {
+  "build:esm": "tsc --project tsconfig.json",
+  "build:cjs": "tsc --project tsconfig.cjs.json",
+  "build": "npm run build:esm && npm run build:cjs"
+},
+"main": "./dist-cjs/index.js",     // <-- CJS build output
+"module": "./dist/index.js",
+"types": "./dist/index.d.ts",
+"exports": {
+  ".": {
+    "import": "./dist/index.js",
+    "require": "./dist-cjs/index.js"
+  }
+}
+
   "exports": {
     ".": {
       "require": {
