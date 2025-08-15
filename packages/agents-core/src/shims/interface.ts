@@ -1,6 +1,16 @@
 export type EventEmitterEvents = Record<string, any[]>;
 
 export interface EventEmitter<
+  function prefixToolName(serverName: string, toolName: string) {
+  return `${serverName}:${toolName}`;
+}
+
+// In the part where tools are being mapped:
+const serverName = serverConfig.name ?? "mcp"; // default if none
+const tools = serverTools.map(tool => ({
+  ...tool,
+  name: prefixToolName(serverName, tool.name),
+}));
   EventTypes extends EventEmitterEvents = Record<string, any[]>,
 > {
   on<K extends keyof EventTypes>(
